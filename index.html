@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Финансовый ассистент — распределение портфеля</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0c;--card:#171718;--card2:#1f1f21;--line:#2a2a2c;--tx:#f2f2f2;--mut:#8b8b90;--ac:#ff5a1f;--g1:#d9d9dc;--g2:#7d7d82;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:radial-gradient(900px 500px at 85% -10%,#2a1308 0,transparent 60%),var(--bg);color:var(--tx);font-family:Onest,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:linear-gradient(160deg,var(--card2),var(--card) 55%);border:1px solid var(--line);border-radius:22px;padding:22px;position:relative;overflow:hidden;min-width:0}
+.profile{grid-column:1/5;grid-row:1/3}
+.alloc{grid-column:5/9}
+.ret{grid-column:9/13}
+.chart{grid-column:5/13}
+.why{grid-column:1/13}
+h1{font-size:30px;font-weight:500;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:15px;font-weight:400;color:var(--mut);margin:0 0 14px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 22px}
+label{display:block;font-size:13px;color:var(--mut);margin:0 0 6px}
+.f{margin-bottom:18px}
+input[type=number]{width:100%;background:#0f0f10;border:1px solid var(--line);border-radius:14px;color:var(--tx);font:inherit;font-size:18px;padding:12px 14px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--ac);height:28px}
+.rv{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+.rv b{color:var(--ac);font-weight:500;font-size:16px}
+.pill{display:block;width:100%;border:0;border-radius:999px;background:var(--ac);color:#fff;font:inherit;font-weight:500;font-size:16px;padding:14px 20px;cursor:pointer;margin-top:6px}
+.pill:active{transform:scale(.98)}
+.bars{display:flex;align-items:flex-end;gap:14px;height:200px;margin-top:6px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.bar i{display:block;width:100%;border-radius:10px 10px 4px 4px;background:linear-gradient(#bdbdc2,#5b5b60);transition:height .5s}
+.bar.top i{background:linear-gradient(#ff7a45,#c9400f)}
+.bar strong{font-size:26px;font-weight:500;margin-bottom:8px}
+.bar.top strong{color:var(--ac)}
+.bar span{font-size:12px;color:var(--mut);margin-top:8px;text-align:center}
+.big{font-size:54px;font-weight:300;color:var(--ac);letter-spacing:-.02em;line-height:1;margin:6px 0 4px}
+.chip{display:inline-block;background:#0f0f10;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:15px;margin-top:10px}
+.mini{color:var(--mut);font-size:13px;margin:14px 0 0}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.cols div{background:#0f0f10;border:1px solid var(--line);border-radius:16px;padding:16px}
+.cols h3{margin:0 0 6px;font-size:15px;font-weight:500}
+.cols p{margin:0;font-size:14px;color:#c9c9cd}
+.sum{font-size:18px;margin:0 0 6px}
+.note{color:var(--mut);font-size:12px;margin-top:16px}
+@media(max-width:860px){.profile,.alloc,.ret,.chart,.why{grid-column:1/13;grid-row:auto}.cols{grid-template-columns:1fr}.big{font-size:46px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="grid">
+
+<section class="card profile">
+<h1>Ваш профиль</h1>
+<p class="sub">Введите данные — ассистент подберёт распределение условного портфеля и объяснит логику.</p>
+<div class="f"><label for="age">Возраст, лет</label><input id="age" type="number" min="18" max="80" value="32"></div>
+<div class="f"><label for="inc">Доход в месяц, ₽</label><input id="inc" type="number" min="0" step="5000" value="120000"></div>
+<div class="f"><label for="cap">Сумма для инвестиций, ₽</label><input id="cap" type="number" min="0" step="10000" value="500000"></div>
+<div class="f"><div class="rv"><label for="risk" style="margin:0">Готовность к риску</label><b id="rvv">6 из 10</b></div>
+<input id="risk" type="range" min="1" max="10" value="6"><div class="rv"><span>спокойно</span><span>рискую</span></div></div>
+<button class="pill" id="go" type="button">Рассчитать портфель</button>
+<p class="note">Учебная модель с условными доходностями. Это не инвестиционная рекомендация.</p>
+</section>
+
+<section class="card alloc">
+<h2>Распределение портфеля</h2>
+<div class="bars" id="bars"></div>
+</section>
+
+<section class="card ret">
+<h2>Ожидаемая доходность в год</h2>
+<div class="big" id="ret">—</div>
+<div class="chip" id="dd">—</div>
+<p class="mini" id="prof"></p>
+</section>
+
+<section class="card chart">
+<h2>Прогноз стоимости на 10 лет</h2>
+<svg id="svg" viewBox="0 0 640 220" role="img" aria-label="График прогноза портфеля"></svg>
+<div class="legend">
+<span><i style="background:#ff5a1f;height:4px"></i>ваш портфель</span>
+<span><i style="background:#d9d9dc"></i>надёжный</span>
+<span><i style="background:#7d7d82"></i>сбалансированный</span>
+<span><i style="background:#4a4a4f"></i>агрессивный</span>
+</div>
+<p class="mini" id="fin"></p>
+</section>
+
+<section class="card why">
+<h2>Почему именно так</h2>
+<p class="sum" id="sum"></p>
+<div class="cols" id="cols"></div>
+</section>
+
+</div>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var fmt=function(n){return Math.round(n).toLocaleString('ru-RU')};
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+var R={s:.06,b:.09,a:.14};          // условные годовые доходности
+var DD={s:.05,b:.20,a:.45};         // условные просадки в плохой год
+function calc(){
+  var age=clamp(+$('age').value||32,18,80), inc=Math.max(0,+$('inc').value||0),
+      cap=Math.max(0,+$('cap').value||0), risk=+$('risk').value;
+  var fAge=clamp((65-age)/40,0,1);                          // длинный горизонт — больше риска
+  var fInc=clamp((Math.log10(Math.max(inc,1))-4.3)/1.5,0,1); // 20 тыс. → 0, ~600 тыс. → 1
+  var fRisk=(risk-1)/9;
+  var score=fRisk*.55+fAge*.3+fInc*.15;
+  var a=Math.round(5+score*55), s=Math.round(65-score*45), b=100-a-s;
+  return {age:age,inc:inc,cap:cap,risk:risk,fAge:fAge,fInc:fInc,score:score,a:a,s:s,b:b};
+}
+function proj(w,yrs,cap,wob){
+  var out=[],v=cap;out.push(v);
+  for(var y=1;y<=yrs;y++){var r=w+(wob?wob*Math.sin(y*1.7):0);v*=1+r;out.push(v)}
+  return out;
+}
+function render(){
+  var d=calc();
+  $('rvv').textContent=d.risk+' из 10';
+  // bars
+  var items=[['Надёжный',d.s,'облигации и вклады'],['Сбалансированный',d.b,'индексные фонды'],['Агрессивный',d.a,'акции роста']];
+  var mx=Math.max(d.s,d.b,d.a);
+  $('bars').innerHTML=items.map(function(x){
+    return '<div class="bar'+(x[1]===mx?' top':'')+'"><strong>'+x[1]+'%</strong><i style="height:'+Math.max(6,x[1]/mx*70)+'%"></i><span>'+x[0]+'<br>'+x[2]+'</span></div>'}).join('');
+  // return & drawdown
+  var er=(d.s*R.s+d.b*R.b+d.a*R.a)/100, dd=(d.s*DD.s+d.b*DD.b+d.a*DD.a)/100;
+  $('ret').textContent=(er*100).toFixed(1).replace('.',',')+'%';
+  $('dd').textContent='Плохой год: −'+Math.round(dd*100)+'% ≈ −'+fmt(d.cap*dd)+' ₽';
+  var name=d.score<.33?'осторожный':d.score<.66?'умеренный':'решительный';
+  $('prof').textContent='Ваш профиль: '+name+'. Риск-балл '+Math.round(d.score*100)+' из 100.';
+  // chart
+  var yrs=10,pf=proj(er,yrs,d.cap,.03),ls=[
+    [proj(R.s,yrs,d.cap,0),'#d9d9dc',2],[proj(R.b,yrs,d.cap,.02),'#7d7d82',2],[proj(R.a,yrs,d.cap,.09),'#4a4a4f',2],[pf,'#ff5a1f',4]];
+  var all=[].concat.apply([],ls.map(function(l){return l[0]})), lo=Math.min.apply(null,all)*.95, hi=Math.max.apply(null,all);
+  if(hi<=lo)hi=lo+1;
+  var X=function(i){return 30+i*(580/yrs)}, Y=function(v){return 200-(v-lo)/(hi-lo)*170};
+  var g='';for(var k=0;k<4;k++){var yy=30+k*57;g+='<line x1="30" x2="610" y1="'+yy+'" y2="'+yy+'" stroke="#2a2a2c"/>'}
+  for(var i=0;i<=yrs;i+=2){g+='<text x="'+X(i)+'" y="216" fill="#8b8b90" font-size="11" text-anchor="middle">'+(i?i+' г.':'сейчас')+'</text>'}
+  ls.forEach(function(l){
+    var p=l[0].map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ');
+    g+='<polyline fill="none" stroke="'+l[1]+'" stroke-width="'+l[2]+'" stroke-linecap="round" stroke-linejoin="round" points="'+p+'"/>'});
+  g+='<circle cx="'+X(yrs)+'" cy="'+Y(pf[yrs])+'" r="6" fill="#ff5a1f"/>';
+  $('svg').innerHTML=g;
+  $('fin').textContent='Через 10 лет '+fmt(d.cap)+' ₽ при такой структуре превратятся примерно в '+fmt(pf[yrs])+' ₽ (условный сценарий, без пополнений).';
+  // explanation
+  var hz=Math.max(0,65-d.age), reserve=d.inc*6, monthly=d.inc*.2;
+  $('sum').textContent='Рекомендуем: надёжный '+d.s+'%, сбалансированный '+d.b+'%, агрессивный '+d.a+'%.';
+  var ageTxt=d.age>=55?'До 65 лет осталось немного, поэтому ассистент ограничивает долю агрессивных вложений: времени на восстановление после просадки мало.'
+    :d.age<=35?'У вас длинный горизонт — '+hz+' лет. Просадки успеют восстановиться, и доля роста может быть выше.'
+    :'Горизонт до 65 лет — '+hz+' лет. Это средний срок: рост нужен, но запас надёжности тоже.';
+  var incTxt='Доход '+fmt(d.inc)+' ₽ в месяц. Подушка на 6 месяцев — около '+fmt(reserve)+' ₽: держите её отдельно от портфеля. Регулярно можно откладывать около '+fmt(monthly)+' ₽ в месяц.';
+  var riskTxt=d.risk>=8&&d.age>=55?'Вы готовы к риску, но возраст сдерживает модель: агрессивная часть ограничена ради сохранности.'
+    :d.risk<=3?'Вы выбрали спокойный подход, поэтому основа портфеля — надёжный инструмент с небольшой просадкой.'
+    :'Готовность к риску '+d.risk+' из 10 даёт больше всего веса в итоговом балле: колебания на '+Math.round(dd*100)+'% в плохой год должны быть для вас терпимы.';
+  $('cols').innerHTML=[['Возраст',ageTxt],['Доход',incTxt],['Отношение к риску',riskTxt]].map(function(x){return '<div><h3>'+x[0]+'</h3><p>'+x[1]+'</p></div>'}).join('');
+}
+['age','inc','cap','risk'].forEach(function(i){$(i).addEventListener('input',render)});
+$('go').addEventListener('click',function(){render();$('svg').scrollIntoView({behavior:'smooth',block:'center'})});
+render();
+})();
+</script>
+</body>
+</html>
